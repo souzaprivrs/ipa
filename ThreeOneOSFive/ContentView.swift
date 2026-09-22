@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UIKit
 import AVFoundation
 
@@ -408,16 +408,10 @@ struct ContentView: View {
             let result: PatchActionResult
             do {
                 if wasEnabled {
-                    guard let receipt = DevicePatchService.latestReceipt(projectID: projectID) else {
-                        result = .unavailable("NO ACTIVE RECEIPT — NOTHING TO RESTORE")
-                        DispatchQueue.main.async {
-                            self.setPatchState(for: packageFilename, enabled: false)
-                            self.patchMessage = "OFF — NO ACTIVE PATCH FOUND"
-                            self.patchOperationBusy = false
-                        }
-                        return
+                    // Tenta restaurar — se não tiver receipt, desativa mesmo assim
+                    if let receipt = DevicePatchService.latestReceipt(projectID: projectID) {
+                        try DevicePatchService.restore(receipt: receipt)
                     }
-                    try DevicePatchService.restore(receipt: receipt)
                     result = .restored
                 } else {
                     guard let project else {
