@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appLanguage) private var language
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var licenseManager: LicenseManager
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
     var body: some View {
@@ -19,6 +20,21 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                }
+
+                Section("Licença ZeroM$") {
+                    if let exp = licenseManager.expiresAt {
+                        LabeledContent("Status", value: exp)
+                    }
+                    Button(role: .destructive) {
+                        licenseManager.deactivate()
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("Desconectar / Trocar Chave")
+                        }
+                    }
                 }
 
                 Section(language.text("settings.language")) {

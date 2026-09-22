@@ -5,6 +5,7 @@ import AVFoundation
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var licenseManager: LicenseManager
     @State private var showSettings = false
     @State private var showCleaner = false
     @StateObject private var patchStore = PatchProjectStore()
@@ -58,6 +59,7 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(licenseManager)
         }
         .sheet(isPresented: $showCleaner) {
             CleanerView()

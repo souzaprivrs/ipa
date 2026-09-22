@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct LicenseActivationView: View {
     @ObservedObject var manager: LicenseManager
@@ -33,6 +33,11 @@ struct LicenseActivationView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            if let saved = manager.rememberedKey(), key.isEmpty {
+                key = saved
+            }
+        }
     }
 
     // MARK: - Sections
@@ -73,9 +78,9 @@ struct LicenseActivationView: View {
     private var titleRow: some View {
         HStack(spacing: 10) {
             Image(systemName: manager.isBusy ? "arrow.triangle.2.circlepath" : "key.fill")
-                .foregroundStyle(AppTheme.secondaryAccent)
+                .foregroundStyle(AppTheme.accent)
                 .font(.system(size: 16, weight: .bold))
-            Text(manager.isBusy ? "Connecting to KeyAuth..." : "KeyAuth License Required")
+            Text(manager.isBusy ? "Conectando ao ZeroM$..." : "Licença ZeroM$")
                 .font(.system(size: 16, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
             Spacer()
@@ -83,14 +88,14 @@ struct LicenseActivationView: View {
     }
 
     private var subtitleText: some View {
-        Text("Enter your KeyAuth license key to activate ZeroM$")
+        Text("Digite sua chave de licença para ativar o ZeroM$")
             .font(.system(size: 13, weight: .medium, design: .rounded))
             .foregroundStyle(.white.opacity(0.68))
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var keyInput: some View {
-        TextField("License key", text: $key)
+        TextField("Chave de licença", text: $key)
             .focused($keyFocused)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
@@ -105,7 +110,7 @@ struct LicenseActivationView: View {
     }
 
     private var rememberToggle: some View {
-        Toggle("Remember key on this device", isOn: $manager.rememberKey)
+        Toggle("Lembrar chave neste dispositivo", isOn: $manager.rememberKey)
             .font(.system(size: 12, weight: .bold, design: .rounded))
             .foregroundStyle(.white.opacity(0.72))
             .tint(AppTheme.accent)
@@ -117,7 +122,7 @@ struct LicenseActivationView: View {
         return Button(action: activate) {
             HStack(spacing: 9) {
                 Image(systemName: manager.isBusy ? "hourglass" : "checkmark.shield.fill")
-                Text(manager.isBusy ? "VERIFYING WITH KEYAUTH..." : "VERIFY AND CONTINUE")
+                Text(manager.isBusy ? "VERIFICANDO COM ZEROM$..." : "ATIVAR E ENTRAR")
             }
             .font(.system(size: 14, weight: .black, design: .rounded))
             .foregroundStyle(.white)

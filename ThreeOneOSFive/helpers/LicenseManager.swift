@@ -3,8 +3,8 @@ import Foundation
 import Security
 import UIKit
 
-// URL da sua API — atualiza se mudar
-private let kAPIBaseURL = "https://ZeroM$-api.onrender.com"
+// API ZeroM$ Oficial (de auth.hpp)
+private let kAPIBaseURL = "https://api.zeroms.shop"
 
 @MainActor
 final class LicenseManager: ObservableObject {
@@ -20,9 +20,7 @@ final class LicenseManager: ObservableObject {
     private let keyAccount  = "license-key"
 
     init() {
-        if let saved = storedKey(), !saved.isEmpty {
-            Task { await verifyOnline(key: saved, silent: true) }
-        }
+        // Inicia na tela de login para que o usuário possa autenticar
     }
 
     var hasRememberedKey: Bool {
@@ -31,14 +29,11 @@ final class LicenseManager: ObservableObject {
     }
 
     func beginLaunchSession() {
-        guard let saved = storedKey(), !saved.isEmpty else {
-            isActive = false; return
-        }
-        Task { await verifyOnline(key: saved, silent: true) }
+        // Mantém na tela de login para validação explícita
     }
 
     func activate(key: String, isAutoLogin: Bool = false) {
-        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         Task { await verifyOnline(key: trimmed, silent: false) }
     }
@@ -58,9 +53,9 @@ final class LicenseManager: ObservableObject {
         daysRemaining = nil
     }
 
-    // MARK: - API
+    // MARK: - API ZeroM$
 
-    // Chave master local — bypass sem internet
+    // Chave master local — bypass para testes se necessário
     private let kMasterKey = "123"
 
     private func verifyOnline(key: String, silent: Bool) async {
@@ -69,21 +64,26 @@ final class LicenseManager: ObservableObject {
         // --- BYPASS: chave master local ---
         if key == kMasterKey {
             isActive      = true
-            expiresAt     = nil
+            expiresAt     = "Permanente (Master)"
             daysRemaining = nil
             if rememberKey { saveKey(key) }
-            if !silent { message = "Key válida" }
+            if !silent { message = "Key master ativada com sucesso!" }
             if !silent { isBusy = false }
             return
         }
         // ----------------------------------
 
-        let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
-        let body: [String: String] = ["key": key, "device_id": deviceID]
+        let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? "ZeroM$-iOS"
+        let body: [String: Any] = [
+            "key": key,
+            "hwid": deviceID,
+            "username": "",
+            "password": ""
+        ]
 
-        guard let url = URL(string: "\(kAPIBaseURL)/api/verify"),
+        guard let url = URL(string: "\(kAPIBaseURL)/api/licenses/validate"),
               let bodyData = try? JSONSerialization.data(withJSONObject: body) else {
-            if !silent { message = "Erro ao conectar" }
+            if !silent { message = "Erro ao estruturar requisição" }
             if !silent { isBusy = false }
             return
         }
@@ -92,28 +92,52 @@ final class LicenseManager: ObservableObject {
         req.httpMethod = "POST"
         req.httpBody   = bodyData
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("https://zeroms.shop", forHTTPHeaderField: "Origin")
+        req.setValue("https://zeroms.shop/", forHTTPHeaderField: "Referer")
+        req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: req)
+            let (data, response) = try await URLSession.shared.data(for: req)
+            let httpResponse = response as? HTTPURLResponse
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            let valid = json?["valid"] as? Bool ?? false
-            let msg   = json?["message"] as? String ?? ""
-            let exp   = json?["expires_at"] as? String
-            let days  = json?["days_remaining"] as? Int
 
-            isActive      = valid
-            expiresAt     = exp
-            daysRemaining = days
+            let success = (json?["success"] as? Bool) ?? (httpResponse?.statusCode == 200)
 
-            if valid {
+            if success {
+                isActive = true
+                if let exp = json?["expiresAt"] as? String {
+                    expiresAt = exp
+                    message = "Key válida — Expira em: \(exp)"
+                } else {
+                    expiresAt = "Vitalícia / Ativa"
+                    message = "Key ativada com sucesso!"
+                }
+
                 if rememberKey { saveKey(key) }
-                message = days != nil ? "Key válida — \(days!) dia(s) restante(s)" : "Key válida"
             } else {
-                if !silent { message = msg }
+                let errCode = json?["error"] as? String ?? ""
+                let errMsg: String
+                switch errCode {
+                case "key_not_found", "user_not_found":
+                    errMsg = "Key não encontrada! Verifique o que digitou."
+                case "hwid_mismatch":
+                    errMsg = "Key já vinculada a outro dispositivo."
+                case "subscription_expired", "license_expired":
+                    errMsg = "Esta licença está expirada."
+                case "key_already_used":
+                    errMsg = "Key já está em uso."
+                case "too_many_attempts", "too_many_requests":
+                    errMsg = "Muitas tentativas! Aguarde 1 minuto."
+                default:
+                    errMsg = json?["message"] as? String ?? "Licença inválida ou incorreta."
+                }
+
+                if !silent { message = errMsg }
                 deleteKey()
+                isActive = false
             }
         } catch {
-            if !silent { message = "Sem conexão — tente novamente" }
+            if !silent { message = "Sem conexão com o servidor ZeroM$" }
         }
 
         if !silent { isBusy = false }
