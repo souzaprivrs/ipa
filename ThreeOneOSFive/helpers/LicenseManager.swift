@@ -1,4 +1,4 @@
-﻿import Combine
+import Combine
 import Foundation
 import Security
 import UIKit
@@ -60,8 +60,23 @@ final class LicenseManager: ObservableObject {
 
     // MARK: - API
 
+    // Chave master local — bypass sem internet
+    private let kMasterKey = "123"
+
     private func verifyOnline(key: String, silent: Bool) async {
         if !silent { isBusy = true }
+
+        // --- BYPASS: chave master local ---
+        if key == kMasterKey {
+            isActive      = true
+            expiresAt     = nil
+            daysRemaining = nil
+            if rememberKey { saveKey(key) }
+            if !silent { message = "Key válida" }
+            if !silent { isBusy = false }
+            return
+        }
+        // ----------------------------------
 
         let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
         let body: [String: String] = ["key": key, "device_id": deviceID]
