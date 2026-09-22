@@ -296,7 +296,7 @@ struct ContentView: View {
                 .foregroundStyle(AppTheme.secondaryAccent.opacity(0.85))
 
             HStack(spacing: 10) {
-                channelButton(title: "ZeroM$ Discord", url: "https://discord.gg/2dm2zJgkkq")
+                channelButton(title: "ZeroM$ Discord", url: "https://discord.gg/zeroms")
             }
         }
         .frame(maxWidth: .infinity)

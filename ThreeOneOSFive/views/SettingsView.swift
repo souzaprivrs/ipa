@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -66,7 +66,7 @@ struct SettingsView: View {
                     creditsRow(
                         name: "ZeroM$",
                         role: language.text("credit.yangjiii"),
-                        url: "https://discord.gg/2dm2zJgkkq"
+                        url: "https://discord.gg/zeroms"
                     )
                 }
 
