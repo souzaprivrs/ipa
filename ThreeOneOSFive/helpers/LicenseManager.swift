@@ -5,6 +5,7 @@ import UIKit
 
 // API ZeroM$ Oficial (de auth.hpp)
 private let kAPIBaseURL = "https://api.zeroms.shop"
+private let kAPIKey = "zeroms_e520035f638c5658045d211ce1b26dc85cd60243bd8427cf09d0b60fae7f37ba"
 
 @MainActor
 final class LicenseManager: ObservableObject {
@@ -77,6 +78,7 @@ final class LicenseManager: ObservableObject {
         let body: [String: Any] = [
             "key": key,
             "hwid": deviceID,
+            "apiKey": kAPIKey,
             "username": "",
             "password": ""
         ]
@@ -92,6 +94,7 @@ final class LicenseManager: ObservableObject {
         req.httpMethod = "POST"
         req.httpBody   = bodyData
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(kAPIKey, forHTTPHeaderField: "X-API-Key")
         req.setValue("https://zeroms.shop", forHTTPHeaderField: "Origin")
         req.setValue("https://zeroms.shop/", forHTTPHeaderField: "Referer")
         req.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15", forHTTPHeaderField: "User-Agent")

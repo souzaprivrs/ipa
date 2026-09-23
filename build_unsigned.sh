@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -32,8 +32,8 @@ done
 
 /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable Cryptroic" "$APP/Info.plist" || true
 /usr/libexec/PlistBuddy -c "Set :CFBundlePackageType APPL" "$APP/Info.plist" || true
-/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ZeroM$" "$APP/Info.plist" || true
-/usr/libexec/PlistBuddy -c "Set :CFBundleName ZeroM$" "$APP/Info.plist" || true
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 0M\$ FF IOS" "$APP/Info.plist" || true
+/usr/libexec/PlistBuddy -c "Set :CFBundleName 0M\$ FF IOS" "$APP/Info.plist" || true
 mkdir -p "$BUILD_DIR/Payload"
 cp -R "$APP" "$BUILD_DIR/Payload/"
 (

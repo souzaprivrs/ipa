@@ -44,8 +44,8 @@ struct LicenseActivationView: View {
 
     private var headerSection: some View {
         VStack(spacing: 5) {
-            Text("ZeroM$")
-                .font(.system(size: 30, weight: .black, design: .rounded))
+            Text("0M$ FF IOS")
+                .font(.system(size: 26, weight: .black, design: .rounded))
                 .tracking(1.4)
                 .foregroundStyle(.white)
             Text("Version: 1.1.0")

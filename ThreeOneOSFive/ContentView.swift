@@ -78,8 +78,8 @@ struct ContentView: View {
     private var brandHeader: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("ZeroM$")
-                    .font(.system(size: 25, weight: .black, design: .rounded))
+                Text("0M$ FF IOS")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
                     .tracking(3)
                     .foregroundStyle(.white)
                 Text("CENTRAL DE PATCHES")
