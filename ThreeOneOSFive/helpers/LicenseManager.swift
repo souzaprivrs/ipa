@@ -10,8 +10,10 @@ private let kAPIKey = "zeroms_e520035f638c5658045d211ce1b26dc85cd60243bd8427cf09
 @MainActor
 final class LicenseManager: ObservableObject {
 
-    @Published private(set) var isActive     = false
-    @Published private(set) var isBusy       = false
+    @Published private(set) var isActive         = false
+    @Published private(set) var isKeyValidated   = false
+    @Published var hasEnteredApp                 = false
+    @Published private(set) var isBusy           = false
     @Published private(set) var message: String?
     @Published private(set) var expiresAt: String?
     @Published private(set) var daysRemaining: Int?
@@ -30,7 +32,21 @@ final class LicenseManager: ObservableObject {
     }
 
     func beginLaunchSession() {
-        // Mantém na tela de login para validação explícita
+        // Se houver chave salva, verifica silenciosamente mas NÃO entra direto
+        if let saved = storedKey(), !saved.isEmpty {
+            Task { await verifyOnline(key: saved, silent: true) }
+        }
+    }
+
+    func enterApp() {
+        guard isKeyValidated else { return }
+        hasEnteredApp = true
+    }
+
+    func resetValidation() {
+        isKeyValidated = false
+        hasEnteredApp  = false
+        message        = nil
     }
 
     func activate(key: String, isAutoLogin: Bool = false) {
@@ -48,10 +64,12 @@ final class LicenseManager: ObservableObject {
 
     func deactivate() {
         deleteKey()
-        isActive      = false
-        message       = nil
-        expiresAt     = nil
-        daysRemaining = nil
+        isActive       = false
+        isKeyValidated = false
+        hasEnteredApp  = false
+        message        = nil
+        expiresAt      = nil
+        daysRemaining  = nil
     }
 
     // MARK: - API ZeroM$
@@ -64,11 +82,12 @@ final class LicenseManager: ObservableObject {
 
         // --- BYPASS: chave master local ---
         if key == kMasterKey {
-            isActive      = true
-            expiresAt     = "Permanente (Master)"
-            daysRemaining = nil
+            isKeyValidated = true
+            isActive       = true
+            expiresAt      = "Permanente (Master)"
+            daysRemaining  = nil
             if rememberKey { saveKey(key) }
-            if !silent { message = "Key master ativada com sucesso!" }
+            if !silent { message = "Key master validada com sucesso!" }
             if !silent { isBusy = false }
             return
         }
@@ -107,13 +126,14 @@ final class LicenseManager: ObservableObject {
             let success = (json?["success"] as? Bool) ?? (httpResponse?.statusCode == 200)
 
             if success {
-                isActive = true
+                isKeyValidated = true
+                isActive       = true
                 if let exp = json?["expiresAt"] as? String {
                     expiresAt = exp
                     message = "Key válida — Expira em: \(exp)"
                 } else {
                     expiresAt = "Vitalícia / Ativa"
-                    message = "Key ativada com sucesso!"
+                    message = "Key validada com sucesso!"
                 }
 
                 if rememberKey { saveKey(key) }
@@ -137,10 +157,13 @@ final class LicenseManager: ObservableObject {
 
                 if !silent { message = errMsg }
                 deleteKey()
-                isActive = false
+                isKeyValidated = false
+                isActive       = false
             }
         } catch {
             if !silent { message = "Sem conexão com o servidor ZeroM$" }
+            isKeyValidated = false
+            isActive       = false
         }
 
         if !silent { isBusy = false }

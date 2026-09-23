@@ -13,7 +13,7 @@ struct SettingsView: View {
                 Section {
                     HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("0M$ FF IOS").font(.headline)
+                            Text("ZeroM$").font(.headline)
                             Text(language.text("common.version", appVersion))
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -22,7 +22,7 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
 
-                Section("Licença 0M$ FF IOS") {
+                Section("Licença ZeroM$") {
                     if let exp = licenseManager.expiresAt {
                         LabeledContent("Status", value: exp)
                     }

@@ -28,6 +28,11 @@ struct ContentView: View {
     @State private var maxAimBodyPackageEnabled = false
     @State private var maxAimChestPackageEnabled = false
     @State private var maxMagicEnabled = false
+    // Magic risk confirmation
+    @State private var showMagicWarning = false
+    @State private var pendingMagicPackage = ""
+    @State private var pendingMagicName = ""
+    @State private var pendingMagicIsMax = false
 
     private enum GameMode: String, CaseIterable {
         case normal = "FF NORMAL"
@@ -45,9 +50,10 @@ struct ContentView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 18) {
                     brandHeader
+                    gameLaunchPanel
                     devicePanel
                     patchOptions
-                    gameLaunchPanel
+                    cleanerSection
                     footerStatus
                     developerCredits
                 }
@@ -67,6 +73,15 @@ struct ContentView: View {
         .sheet(item: $patchStore.passwordRequest, onDismiss: patchStore.cancelUnlock) { _ in
             PatchUnlockPrompt(store: patchStore)
         }
+        .alert("Aviso", isPresented: $showMagicWarning) {
+            Button("Sim", role: .destructive) {
+                let state = pendingMagicIsMax ? $maxHyperBalamagicaEnabled : $hyperBalamagicaEnabled
+                togglePatch(packageFilename: pendingMagicPackage, state: state, name: pendingMagicName)
+            }
+            Button("Não", role: .cancel) { }
+        } message: {
+            Text("Essa função contém risco, deseja ativar?")
+        }
         .onAppear { syncPatchStates() }
         .onChange(of: scenePhase) { phase in
             guard phase == .active, !patchOperationBusy else { return }
@@ -76,33 +91,33 @@ struct ContentView: View {
     }
 
     private var brandHeader: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("0M$ FF IOS")
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .tracking(3)
-                    .foregroundStyle(.white)
+        ZStack(alignment: .center) {
+            VStack(spacing: 4) {
+                BrandLogoView(height: 44)
                 Text("CENTRAL DE PATCHES")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .tracking(1.7)
                     .foregroundStyle(AppTheme.accent)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
 
-            Spacer()
-
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(AppTheme.accent)
-                    .frame(width: 48, height: 48)
-                    .background(Color.black.opacity(0.38), in: Circle())
-                    .overlay(Circle().stroke(AppTheme.accent.opacity(0.42), lineWidth: 1))
+            HStack {
+                Spacer()
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(AppTheme.accent)
+                        .frame(width: 44, height: 44)
+                        .background(Color.black.opacity(0.38), in: Circle())
+                        .overlay(Circle().stroke(AppTheme.accent.opacity(0.42), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open settings")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Open settings")
         }
+        .padding(.vertical, 4)
     }
 
     private var devicePanel: some View {
@@ -161,23 +176,23 @@ struct ContentView: View {
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(AppTheme.accent.opacity(0.18), lineWidth: 1))
 
             if selectedGame == .normal {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    patchCard(name: "Hs Alto",     target: "FREE FIRE • NORMAL", package: "Cryptroic File (6).3105",  color: AppTheme.accent, state: $aimDragEnabled)
-                    patchCard(name: "Hs pescoço",  target: "FREE FIRE • NORMAL", package: "Cryptroic File (7).3105",  color: AppTheme.accent, state: $aimNeckEnabled)
-                    patchCard(name: "Holograma",   target: "FREE FIRE • NORMAL", package: "Cryptroic File (8).3105",  color: AppTheme.accent, state: $hspeitoffEnabled)
-                    patchCard(name: "Magic",       target: "FREE FIRE • NORMAL", package: "Cryptroic File (10).3105", color: AppTheme.accent, state: $hyperBalamagicaEnabled)
-                    patchCard(name: "Skin Mendela", target: "FREE FIRE • NORMAL", package: "Cryptroic File (12).3105", color: AppTheme.accent, state: $aimBodyPackageEnabled)
-                    patchCard(name: "Skin V1",     target: "FREE FIRE • NORMAL", package: "Cryptroic File (14).3105", color: AppTheme.accent, state: $magicEnabled)
+                VStack(spacing: 9) {
+                    patchRow(name: "Hs Alto",     target: "FREE FIRE • NORMAL", package: "Cryptroic File (6).3105",  color: AppTheme.accent, state: $aimDragEnabled)
+                    patchRow(name: "Hs pescoço",  target: "FREE FIRE • NORMAL", package: "Cryptroic File (7).3105",  color: AppTheme.accent, state: $aimNeckEnabled)
+                    patchRow(name: "Holograma",   target: "FREE FIRE • NORMAL", package: "Cryptroic File (8).3105",  color: AppTheme.accent, state: $hspeitoffEnabled)
+                    patchRow(name: "Magic",       target: "FREE FIRE • NORMAL", package: "Cryptroic File (10).3105", color: AppTheme.accent, state: $hyperBalamagicaEnabled)
+                    patchRow(name: "Skin Mendela", target: "FREE FIRE • NORMAL", package: "Cryptroic File (12).3105", color: AppTheme.accent, state: $aimBodyPackageEnabled)
+                    patchRow(name: "Skin V1",     target: "FREE FIRE • NORMAL", package: "Cryptroic File (14).3105", color: AppTheme.accent, state: $magicEnabled)
                 }
                 .transition(.opacity.combined(with: .move(edge: .leading)))
             } else {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    patchCard(name: "Hs Alto",     target: "FREE FIRE • MAX", package: "OGIOS File (6).3105",  color: AppTheme.accent, state: $maxAimDragEnabled)
-                    patchCard(name: "Hs pescoço",  target: "FREE FIRE • MAX", package: "OGIOS File (7).3105",  color: AppTheme.accent, state: $maxAimNeckEnabled)
-                    patchCard(name: "Holograma",   target: "FREE FIRE • MAX", package: "OGIOS File (8).3105",  color: AppTheme.accent, state: $maxHspeitoffEnabled)
-                    patchCard(name: "Magic",       target: "FREE FIRE • MAX", package: "OGIOS File (10).3105", color: AppTheme.accent, state: $maxHyperBalamagicaEnabled)
-                    patchCard(name: "Skin Mendela", target: "FREE FIRE • MAX", package: "OGIOS File (12).3105", color: AppTheme.accent, state: $maxAimBodyPackageEnabled)
-                    patchCard(name: "Skin V1",     target: "FREE FIRE • MAX", package: "OGIOS File (14).3105", color: AppTheme.accent, state: $maxMagicEnabled)
+                VStack(spacing: 9) {
+                    patchRow(name: "Hs Alto",     target: "FREE FIRE • MAX", package: "OGIOS File (6).3105",  color: AppTheme.accent, state: $maxAimDragEnabled)
+                    patchRow(name: "Hs pescoço",  target: "FREE FIRE • MAX", package: "OGIOS File (7).3105",  color: AppTheme.accent, state: $maxAimNeckEnabled)
+                    patchRow(name: "Holograma",   target: "FREE FIRE • MAX", package: "OGIOS File (8).3105",  color: AppTheme.accent, state: $maxHspeitoffEnabled)
+                    patchRow(name: "Magic",       target: "FREE FIRE • MAX", package: "OGIOS File (10).3105", color: AppTheme.accent, state: $maxHyperBalamagicaEnabled)
+                    patchRow(name: "Skin Mendela", target: "FREE FIRE • MAX", package: "OGIOS File (12).3105", color: AppTheme.accent, state: $maxAimBodyPackageEnabled)
+                    patchRow(name: "Skin V1",     target: "FREE FIRE • MAX", package: "OGIOS File (14).3105", color: AppTheme.accent, state: $maxMagicEnabled)
                 }
                 .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
@@ -196,14 +211,25 @@ struct ContentView: View {
         }
     }
 
-    private func patchCard(name: String, target: String, package: String, color: Color, state: Binding<Bool>) -> some View {
-        PatchOptionCard(name: name, target: target, color: color, isEnabled: state, isBusy: patchOperationBusy) {
+    private func patchRow(name: String, target: String, package: String, color: Color, state: Binding<Bool>) -> some View {
+        PatchToggleRow(name: name, target: target, color: color, isEnabled: state, isBusy: patchOperationBusy) {
+            handlePatchToggle(name: name, package: package, state: state)
+        }
+    }
+
+    private func handlePatchToggle(name: String, package: String, state: Binding<Bool>) {
+        if name == "Magic" && !state.wrappedValue {
+            pendingMagicName = name
+            pendingMagicPackage = package
+            pendingMagicIsMax = (selectedGame == .max)
+            showMagicWarning = true
+        } else {
             togglePatch(packageFilename: package, state: state, name: name)
         }
     }
 
     private var gameLaunchPanel: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             panelTitle("INICIAR JOGO", icon: "arrow.up.forward.app.fill")
             HStack(spacing: 12) {
                 if selectedGame == .normal {
@@ -212,19 +238,22 @@ struct ContentView: View {
                     launchButton(title: "FF MAX", subtitle: "Free Fire MAX", color: AppTheme.accent, scheme: "freefiremax")
                 }
             }
-            Button {
-                showCleaner = true
-            } label: {
-                Label("Limpar Cache e Temp", systemImage: "trash.slash.fill")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Color.black.opacity(0.40), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(AppTheme.accent.opacity(0.52), lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Open cache and temporary files cleaner")
         }
+    }
+
+    private var cleanerSection: some View {
+        Button {
+            showCleaner = true
+        } label: {
+            Label("Limpar Cache e Temp", systemImage: "trash.slash.fill")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(Color.black.opacity(0.40), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(AppTheme.accent.opacity(0.52), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Open cache and temporary files cleaner")
     }
 
     private func launchButton(title: String, subtitle: String, color: Color, scheme: String) -> some View {
@@ -470,7 +499,7 @@ struct ContentView: View {
     }
 }
 
-private struct PatchOptionCard: View {
+private struct PatchToggleRow: View {
     let name: String
     let target: String
     let color: Color
@@ -479,42 +508,42 @@ private struct PatchOptionCard: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 11) {
-                HStack {
-                    Image(systemName: "bolt.fill").font(.system(size: 16, weight: .black)).foregroundStyle(color)
-                    Spacer()
-                    Text(isEnabled ? "ON" : "OFF")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(isEnabled ? .green : .white.opacity(0.58))
-                }
+        HStack(spacing: 12) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(color)
+                .frame(width: 32, height: 32)
+                .background(color.opacity(isEnabled ? 0.24 : 0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.78)
                 Text(target)
-                    .font(.system(size: 10, weight: .black, design: .rounded))
-                    .tracking(1.3)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .tracking(1.0)
                     .foregroundStyle(color)
-                HStack(spacing: 7) {
-                    Circle().fill(isEnabled ? Color.green : Color.white.opacity(0.25)).frame(width: 8, height: 8)
-                    Text(isEnabled ? "PATCH ATIVO" : "ATIVAR PATCH")
-                        .font(.system(size: 9, weight: .black, design: .rounded))
-                        .tracking(0.8)
-                        .foregroundStyle(.white.opacity(0.65))
-                }
             }
-            .frame(maxWidth: .infinity, minHeight: 142, alignment: .leading)
-            .padding(14)
-            .background(Color.black.opacity(0.52), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(isEnabled ? color.opacity(0.85) : color.opacity(0.28), lineWidth: isEnabled ? 1.5 : 1))
-            .shadow(color: isEnabled ? color.opacity(0.20) : .clear, radius: 12)
+
+            Spacer()
+
+            Toggle("", isOn: Binding(
+                get: { isEnabled },
+                set: { _ in action() }
+            ))
+            .labelsHidden()
+            .tint(color)
+            .disabled(isBusy)
         }
-        .buttonStyle(.plain)
-        .disabled(isBusy)
-        .opacity(isBusy ? 0.55 : 1)
-        .accessibilityLabel("\(name), \(target), \(isEnabled ? "On" : "Off")")
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isEnabled ? color.opacity(0.75) : color.opacity(0.24), lineWidth: isEnabled ? 1.4 : 1)
+        )
+        .shadow(color: isEnabled ? color.opacity(0.18) : .clear, radius: 8)
+        .accessibilityLabel("\(name), \(target), \(isEnabled ? "Ativado" : "Desativado")")
     }
 }
 

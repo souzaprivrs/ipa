@@ -49,8 +49,8 @@ jobs:
             echo "Patches copied"
           fi
 
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 0M\$ FF IOS" "$APP/Info.plist" || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleName 0M\$ FF IOS"        "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ZeroM\$" "$APP/Info.plist" || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName ZeroM\$"        "$APP/Info.plist" || true
 
           echo "=== Packaging IPA ==="
           mkdir -p "$BUILD_DIR/Payload"

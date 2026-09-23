@@ -69,6 +69,7 @@
 		3105A228 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3105A120; };
 		3105K200 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105K100; };
 		3105K201 /* LicenseActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105K101; };
+		3105L200 /* AppSplashLoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105L100; };
 		3105A211 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3105A031; };
 		3105P201 /* Cryptroic File (6).3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105P101; };
 	3105P202 /* Cryptroic File (7).3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105P102; };
@@ -174,6 +175,7 @@
 		3105H100 /* AppTabNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
 		3105I100 /* FilesTabControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabControls.swift; sourceTree = "<group>"; };
 		3105I101 /* FilesTabSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabSwitcherView.swift; sourceTree = "<group>"; };
+		3105L100 /* AppSplashLoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSplashLoadingView.swift; sourceTree = "<group>"; };
 		3105A121 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		3105A122 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 3105A123 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 				3105E101 /* CleanerView.swift */,
 				3105F106 /* WallpaperLabView.swift */,
 				3105F108 /* OnboardingView.swift */,
+				3105L100 /* AppSplashLoadingView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -484,6 +487,7 @@
 				3105H200,
 				3105I200,
 				3105I201,
+				3105L200 /* AppSplashLoadingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

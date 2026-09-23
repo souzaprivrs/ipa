@@ -1,4 +1,4 @@
-﻿import SwiftUI
+import SwiftUI
 import UIKit
 
 @main
@@ -9,6 +9,7 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var fileOperationCoordinator = FileOperationCoordinator();
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     @State private var updateOffer: AppUpdateChecker.Offer?
+    @State private var isInitialLoading = true
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -29,19 +30,26 @@ struct ThreeOneOSFiveApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if licenseManager.isActive {
+            ZStack {
+                if isInitialLoading {
+                    AppSplashLoadingView()
+                        .transition(.opacity)
+                } else if licenseManager.isKeyValidated && licenseManager.hasEnteredApp {
                     ContentView()
                         .environmentObject(licenseManager)
+                        .transition(.opacity)
                 } else {
                     LicenseActivationView(manager: licenseManager)
+                        .transition(.opacity)
                 }
             }
-                .environmentObject(appState)
-                .environmentObject(patchDraftCoordinator)
-                .environmentObject(fileOperationCoordinator)
-                .environment(\.appLanguage, language)
-                .environment(\.locale, language.locale)
+            .animation(.easeInOut(duration: 0.35), value: isInitialLoading)
+            .animation(.easeInOut(duration: 0.35), value: licenseManager.hasEnteredApp)
+            .environmentObject(appState)
+            .environmentObject(patchDraftCoordinator)
+            .environmentObject(fileOperationCoordinator)
+            .environment(\.appLanguage, language)
+            .environment(\.locale, language.locale)
             .alert(item: $updateOffer) { offer in
                 Alert(
                     title: Text(language.text("update.title")),
@@ -58,6 +66,12 @@ struct ThreeOneOSFiveApp: App {
                 licenseManager.beginLaunchSession()
                 appState.detectSupport()
                 checkForUpdate()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        isInitialLoading = false
+                    }
+                }
             }
             .onChange(of: scenePhase) { phase in
                 guard phase == .active else { return }

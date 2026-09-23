@@ -103,3 +103,25 @@ struct AppLogo: View {
         .accessibilityHidden(true)
     }
 }
+
+struct BrandLogoView: View {
+    var height: CGFloat = 36
+
+    var body: some View {
+        Group {
+            if let img = UIImage(named: "LOGO2")
+                ?? Bundle.main.path(forResource: "LOGO2", ofType: "png").flatMap(UIImage.init(contentsOfFile:)) {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                Text("ZeroM$")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .tracking(3)
+                    .foregroundStyle(.white)
+            }
+        }
+        .frame(height: height)
+        .accessibilityLabel("Logo")
+    }
+}
