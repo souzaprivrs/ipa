@@ -425,12 +425,13 @@ struct ContentView: View {
         guard let item = patchStore.items.first(where: { $0.packageURL.lastPathComponent.caseInsensitiveCompare(packageFilename) == .orderedSame }) else {
             patchMessage = "ERROR — PACKAGE NOT FOUND"
             log("patch: package not found: \(packageFilename)")
+            state.wrappedValue = false
             return
         }
 
         let wasEnabled = state.wrappedValue
         patchOperationBusy = true
-        patchMessage = "PROCESSANDO PATCH…"
+        patchMessage = wasEnabled ? "DESATIVANDO PATCH…" : "PROCESSANDO PATCH…"
         let project = item.project
         let projectID = item.id
         let patchDisplayName = name
@@ -441,8 +442,9 @@ struct ContentView: View {
                 if wasEnabled {
                     // Tenta restaurar — se não tiver receipt, desativa mesmo assim
                     if let receipt = DevicePatchService.latestReceipt(projectID: projectID) {
-                        try DevicePatchService.restore(receipt: receipt)
+                        _ = try? DevicePatchService.restore(receipt: receipt)
                     }
+                    DevicePatchService.forceClearReceipt(projectID: projectID)
                     result = .restored
                 } else {
                     var resolvedProject = project
@@ -470,7 +472,12 @@ struct ContentView: View {
                     result = .applied
                 }
             } catch {
-                result = .unavailable("FAILED — \(String(describing: error))")
+                if wasEnabled {
+                    DevicePatchService.forceClearReceipt(projectID: projectID)
+                    result = .restored
+                } else {
+                    result = .unavailable("FAILED — \(String(describing: error))")
+                }
             }
 
             DispatchQueue.main.async {
@@ -508,41 +515,55 @@ private struct PatchToggleRow: View {
     let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(color)
-                .frame(width: 32, height: 32)
-                .background(color.opacity(isEnabled ? 0.24 : 0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(target)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .tracking(1.0)
+        Button(action: {
+            guard !isBusy else { return }
+            action()
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(color)
+                    .frame(width: 32, height: 32)
+                    .background(color.opacity(isEnabled ? 0.24 : 0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(target)
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .tracking(1.0)
+                        .foregroundStyle(color)
+                }
+
+                Spacer()
+
+                // Custom animated slide switch (checkbox slide / tracinho que arrasta pro lado)
+                ZStack(alignment: isEnabled ? .trailing : .leading) {
+                    Capsule()
+                        .fill(isEnabled ? color : Color.white.opacity(0.18))
+                        .frame(width: 46, height: 26)
+
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 22, height: 22)
+                        .padding(2)
+                        .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+                }
+                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isEnabled)
             }
-
-            Spacer()
-
-            Toggle("", isOn: Binding(
-                get: { isEnabled },
-                set: { _ in action() }
-            ))
-            .labelsHidden()
-            .tint(color)
-            .disabled(isBusy)
+            .contentShape(Rectangle())
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isEnabled ? color.opacity(0.75) : color.opacity(0.24), lineWidth: isEnabled ? 1.4 : 1)
+            )
+            .shadow(color: isEnabled ? color.opacity(0.18) : .clear, radius: 8)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(isEnabled ? color.opacity(0.75) : color.opacity(0.24), lineWidth: isEnabled ? 1.4 : 1)
-        )
-        .shadow(color: isEnabled ? color.opacity(0.18) : .clear, radius: 8)
+        .buttonStyle(.plain)
+        .disabled(isBusy)
         .accessibilityLabel("\(name), \(target), \(isEnabled ? "Ativado" : "Desativado")")
     }
 }

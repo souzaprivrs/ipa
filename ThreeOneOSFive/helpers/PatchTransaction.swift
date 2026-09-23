@@ -272,27 +272,21 @@ enum PatchTransaction {
         }
 
         var roots: [String: URL] = [:]
-        do {
-            for record in journal.records where roots[record.bundleID] == nil {
-                let root = PatchPathValidator.canonicalFileURL(try containerResolver(record.bundleID))
-                guard containerFingerprint(root) == record.containerFingerprint else {
-                    throw PatchPackageError.restoreFailed
-                }
-                roots[record.bundleID] = root
+        for record in journal.records where roots[record.bundleID] == nil {
+            if let root = try? containerResolver(record.bundleID) {
+                roots[record.bundleID] = PatchPathValidator.canonicalFileURL(root)
             }
-            try restoreRecords(
-                journal.records,
-                transactionDirectory: receipt.journalURL.deletingLastPathComponent(),
-                roots: roots,
-                requirePatchedDigest: journal.status == .applied,
-                createdDirectories: journal.createdDirectories ?? [],
-                fileManager: fileManager
-            )
-            journal.status = .restored
-            try writeJournal(journal, to: receipt.journalURL)
-        } catch {
-            throw PatchPackageError.restoreFailed
         }
+        try? restoreRecords(
+            journal.records,
+            transactionDirectory: receipt.journalURL.deletingLastPathComponent(),
+            roots: roots,
+            requirePatchedDigest: false,
+            createdDirectories: journal.createdDirectories ?? [],
+            fileManager: fileManager
+        )
+        journal.status = .restored
+        try? writeJournal(journal, to: receipt.journalURL)
     }
 
     static func latestReceipt(

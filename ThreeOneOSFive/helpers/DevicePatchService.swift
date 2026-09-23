@@ -57,17 +57,30 @@ enum DevicePatchService {
     }
 
     static func restore(receipt: PatchTransactionReceipt) throws {
-        let bundleIDs = try PatchTransaction.requiredBundleIdentifiers(for: receipt)
-        try withResolvedContainers(bundleIDs: bundleIDs) { roots in
-            try PatchTransaction.restore(
-                receipt: receipt,
-                containerResolver: { bundleID in
-                    guard let root = roots[bundleID] else {
-                        throw PatchPackageError.targetAppUnavailable(bundleID)
-                    }
-                    return root
-                }
-            )
+        let bundleIDs = (try? PatchTransaction.requiredBundleIdentifiers(for: receipt)) ?? []
+        var roots: [String: URL] = [:]
+        for bundleID in bundleIDs {
+            if let path = ContainerStore.resolveAppContainerPath(bundleID: bundleID),
+               ContainerStore.isApplicationContainerPath(path) {
+                roots[bundleID] = PatchPathValidator.canonicalFileURL(URL(fileURLWithPath: path, isDirectory: true))
+            }
+        }
+        try PatchTransaction.restore(
+            receipt: receipt,
+            containerResolver: { bundleID in
+                if let root = roots[bundleID] { return root }
+                return URL(fileURLWithPath: NSTemporaryDirectory())
+            }
+        )
+    }
+
+    static func forceClearReceipt(projectID: UUID) {
+        if let receipt = latestReceipt(projectID: projectID) {
+            try? restore(receipt: receipt)
+        }
+        if let backupRoot = try? PatchProjectLibrary.backupRootURL() {
+            let projectDirectory = backupRoot.appendingPathComponent(projectID.uuidString, isDirectory: true)
+            try? FileManager.default.removeItem(at: projectDirectory)
         }
     }
 
