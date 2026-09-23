@@ -342,9 +342,8 @@ enum PatchTransaction {
     ) throws {
         var resolvedTargets: [(Record, URL)] = []
         for record in records {
-            guard let root = roots[record.bundleID],
-                  containerFingerprint(root) == record.containerFingerprint else {
-                throw PatchPackageError.restoreFailed
+            guard let root = roots[record.bundleID] else {
+                continue
             }
             let target = try PatchPathValidator.resolveContainedTargetURL(
                 relativePath: record.relativePath,
@@ -388,9 +387,8 @@ enum PatchTransaction {
         }
 
         for directory in createdDirectories.reversed() {
-            guard let root = roots[directory.bundleID],
-                  containerFingerprint(root) == directory.containerFingerprint else {
-                throw PatchPackageError.restoreFailed
+            guard let root = roots[directory.bundleID] else {
+                continue
             }
             let target = try PatchPathValidator.resolveContainedTargetURL(
                 relativePath: directory.relativePath,

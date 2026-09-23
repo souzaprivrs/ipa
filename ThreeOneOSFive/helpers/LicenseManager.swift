@@ -74,24 +74,8 @@ final class LicenseManager: ObservableObject {
 
     // MARK: - API ZeroM$
 
-    // Chave master local — bypass para testes se necessário
-    private let kMasterKey = "123"
-
     private func verifyOnline(key: String, silent: Bool) async {
         if !silent { isBusy = true }
-
-        // --- BYPASS: chave master local ---
-        if key == kMasterKey {
-            isKeyValidated = true
-            isActive       = true
-            expiresAt      = "Permanente (Master)"
-            daysRemaining  = nil
-            if rememberKey { saveKey(key) }
-            if !silent { message = "Key master validada com sucesso!" }
-            if !silent { isBusy = false }
-            return
-        }
-        // ----------------------------------
 
         let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? "ZeroM$-iOS"
         let body: [String: Any] = [
