@@ -182,7 +182,7 @@ struct ContentView: View {
                     patchRow(name: "Holograma",   target: "FREE FIRE • NORMAL", package: "Cryptroic File (8).3105",  color: AppTheme.accent, state: $hspeitoffEnabled)
                     patchRow(name: "Magic",       target: "FREE FIRE • NORMAL", package: "Cryptroic File (10).3105", color: AppTheme.accent, state: $hyperBalamagicaEnabled)
                     patchRow(name: "Skin Mendela", target: "FREE FIRE • NORMAL", package: "Cryptroic File (12).3105", color: AppTheme.accent, state: $aimBodyPackageEnabled)
-                    patchRow(name: "Skin V1",     target: "FREE FIRE • NORMAL", package: "Cryptroic File (14).3105", color: AppTheme.accent, state: $magicEnabled)
+                    patchRow(name: "Skin V1",     target: "personagem: Alok despertado", package: "Cryptroic File (14).3105", color: AppTheme.accent, state: $magicEnabled)
                 }
                 .transition(.opacity.combined(with: .move(edge: .leading)))
             } else {
@@ -192,7 +192,7 @@ struct ContentView: View {
                     patchRow(name: "Holograma",   target: "FREE FIRE • MAX", package: "OGIOS File (8).3105",  color: AppTheme.accent, state: $maxHspeitoffEnabled)
                     patchRow(name: "Magic",       target: "FREE FIRE • MAX", package: "OGIOS File (10).3105", color: AppTheme.accent, state: $maxHyperBalamagicaEnabled)
                     patchRow(name: "Skin Mendela", target: "FREE FIRE • MAX", package: "OGIOS File (12).3105", color: AppTheme.accent, state: $maxAimBodyPackageEnabled)
-                    patchRow(name: "Skin V1",     target: "FREE FIRE • MAX", package: "OGIOS File (14).3105", color: AppTheme.accent, state: $maxMagicEnabled)
+                    patchRow(name: "Skin V1",     target: "personagem: Ignis", package: "OGIOS File (14).3105", color: AppTheme.accent, state: $maxMagicEnabled)
                 }
                 .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
