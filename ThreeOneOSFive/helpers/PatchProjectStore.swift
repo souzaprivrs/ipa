@@ -172,6 +172,12 @@ final class PatchProjectStore: ObservableObject {
         guard item.isLocked, !isBusy else { return }
         do {
             let data = try PatchProjectLibrary.readPackage(at: item.packageURL)
+            // Se for pacote do app ou tiver a senha padrão, desbloqueia silenciosamente sem pedir senha
+            if let decoded = try? PatchPackageCodec.decode(data, password: PatchPackageCodec.bundledResourcePassword) {
+                try? PatchKeyStore.store(decoded.contentKey, for: item.summary)
+                reload()
+                return
+            }
             pendingUnlock = PendingUnlock(data: data, summary: item.summary, existingURL: item.packageURL)
             passwordRequest = PatchPasswordRequest(summary: item.summary)
         } catch let error as PatchPackageError {
@@ -187,7 +193,17 @@ final class PatchProjectStore: ObservableObject {
         unlockErrorKey = nil
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                let decoded = try PatchPackageCodec.decode(pending.data, password: password)
+                var decodedOpt: DecodedPatchPackage?
+                if let d = try? PatchPackageCodec.decode(pending.data, password: password) {
+                    decodedOpt = d
+                } else if let d = try? PatchPackageCodec.decode(pending.data, password: PatchPackageCodec.bundledResourcePassword) {
+                    decodedOpt = d
+                } else {
+                    decodedOpt = try PatchPackageCodec.decode(pending.data, password: password)
+                }
+                guard let decoded = decodedOpt else {
+                    throw PatchPackageError.invalidPasswordOrCorruptedPackage
+                }
                 try PatchKeyStore.store(decoded.contentKey, for: pending.summary)
                 do {
                     try PatchProjectLibrary.installImportedPackage(

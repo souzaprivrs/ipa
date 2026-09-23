@@ -1,4 +1,4 @@
-﻿import Foundation
+import Foundation
 
 struct PatchLibraryItem: Identifiable {
     let summary: PatchPackageSummary
@@ -71,10 +71,10 @@ enum PatchProjectLibrary {
 
         for sourceURL in bundledURLs {
             let destinationURL = root.appendingPathComponent(sourceURL.lastPathComponent)
-            guard !fileManager.fileExists(atPath: destinationURL.path) else { continue }
             do {
                 let data = try Data(contentsOf: sourceURL, options: .mappedIfSafe)
                 _ = try PatchPackageCodec.inspect(data)
+                try? fileManager.removeItem(at: destinationURL)
                 try data.write(to: destinationURL, options: [.atomic, .completeFileProtection])
             } catch {
                 log("patch: skipped bundled package \(sourceURL.lastPathComponent): \(error)")

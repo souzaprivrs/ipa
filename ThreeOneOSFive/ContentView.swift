@@ -416,7 +416,17 @@ struct ContentView: View {
                     }
                     result = .restored
                 } else {
-                    guard let project else {
+                    var resolvedProject = project
+                    if resolvedProject == nil {
+                        // Tenta desbloquear automaticamente com a senha interna caso ainda esteja bloqueado
+                        if let data = try? PatchProjectLibrary.readPackage(at: item.packageURL),
+                           let unlocked = try? PatchPackageCodec.decode(data, password: PatchPackageCodec.bundledResourcePassword) {
+                            try? PatchKeyStore.store(unlocked.contentKey, for: item.summary)
+                            resolvedProject = unlocked.project
+                        }
+                    }
+
+                    guard let projectToApply = resolvedProject else {
                         result = .unavailable("PASSWORD REQUIRED — UNLOCK PACKAGE")
                         DispatchQueue.main.async {
                             self.patchStore.requestUnlock(for: item)
@@ -427,7 +437,7 @@ struct ContentView: View {
                     }
                     let isMax = self.selectedGame == .max || packageFilename.hasPrefix("OGIOS")
                     let targetBundle = isMax ? "com.dts.freefiremax" : "com.dts.freefireth"
-                    _ = try DevicePatchService.apply(project: project, targetBundleID: targetBundle)
+                    _ = try DevicePatchService.apply(project: projectToApply, targetBundleID: targetBundle)
                     result = .applied
                 }
             } catch {
